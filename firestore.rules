@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/drafts/{draftId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == uid;
+      }
+
+      function isValidDraft() {
+        let draft = request.resource.data;
+        return draft.keys().hasOnly(['title', 'markdown', 'updatedAt'])
+          && draft.title is string
+          && draft.markdown is string
+          && draft.updatedAt == request.time;
+      }
+
+      allow get, list: if isOwner();
+      allow create, update: if isOwner() && isValidDraft();
+    }
+  }
+}
