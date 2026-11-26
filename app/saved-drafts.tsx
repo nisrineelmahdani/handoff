@@ -196,12 +196,12 @@ export function SavedDrafts({
             onChange={(event) => setOpened({ ...opened, markdown: event.target.value })}
           />
           <SaveDraftButton
-            key={opened.id}
+            key={`reopened-save-${opened.id}`}
             draftId={opened.id}
             markdown={opened.markdown}
             onSaved={onSaved}
           />
-          <CopyMarkdownButton key={opened.id} markdown={opened.markdown} />
+          <CopyMarkdownButton key={`reopened-copy-${opened.id}`} markdown={opened.markdown} />
         </div>
       )}
     </section>

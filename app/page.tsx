@@ -379,8 +379,8 @@ export default function Home() {
           >
             Polish in cloud
           </button>
-          <SaveDraftButton key={localDraftGeneration} markdown={draft} onSaved={refreshSavedDrafts} />
-          <CopyMarkdownButton key={localDraftGeneration} markdown={draft} />
+          <SaveDraftButton key={`local-save-${localDraftGeneration}`} markdown={draft} onSaved={refreshSavedDrafts} />
+          <CopyMarkdownButton key={`local-copy-${localDraftGeneration}`} markdown={draft} />
         </div>
       )}
 
