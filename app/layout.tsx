@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Handoff",
-  description: "Turn developer logs into editable Markdown bug reports.",
+  title: "Handoff | Logs to issue reports",
+  applicationName: "Handoff",
+  description: "Redact developer logs in your browser, draft an issue on-device, and review any cloud edits before accepting them.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
