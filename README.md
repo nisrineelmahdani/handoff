@@ -35,7 +35,7 @@ Complete the Firebase setup below, then run `npm run dev` and open [http://local
 4. Create the default **Cloud Firestore** database. Open its **Rules** tab, paste [firestore.rules](firestore.rules), and click **Publish**. The rules allow the authenticated owner to read, list, create, and update reports under `users/{uid}/drafts/{draftId}`. All other client access is denied. [Publishing Firestore rules](https://firebase.google.com/docs/firestore/security/get-started)
 5. On localhost, open Chrome DevTools, expand **Development diagnostics**, and click **Test cloud AI** to generate the browser's App Check debug token during initial setup. Register it for your web app under **App Check → Apps → Manage debug tokens**, then retry. Once registered, cloud polishing works directly from the confirmation panel. [App Check debug provider](https://firebase.google.com/docs/app-check/web/debug-provider)
 
-The cloud demo currently uses localhost-only App Check debug mode. A hosted cloud demo needs a production App Check provider and corresponding application configuration before release.
+For hosted cloud polishing, register the web app with the **reCAPTCHA Enterprise** provider in Firebase App Check and add the hosting domain to the score-based key. Set the public site key as `NEXT_PUBLIC_FIREBASE_APPCHECK_SITE_KEY` in the Vercel Production environment, then deploy a new build. [Firebase App Check setup](https://firebase.google.com/docs/app-check/web/recaptcha-enterprise-provider)
 
 ## Try other inputs
 

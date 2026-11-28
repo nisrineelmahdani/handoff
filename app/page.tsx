@@ -7,6 +7,7 @@ import {
   CustomProvider,
   getToken,
   initializeAppCheck,
+  ReCaptchaEnterpriseProvider,
   type AppCheck,
 } from "firebase/app-check";
 import {
@@ -79,36 +80,38 @@ Do not add a standalone "[Redacted]" line or introduce new questions. Preserve t
 Include a response body only if the approved draft explicitly provides its contents. Copy it verbatim on a separate "Response body:" line. Otherwise omit the line and any claim about the body, including claims that a missing body was redacted.
 Preserve the reproduction steps exactly as written, including any unknown status. Keep open questions unanswered. Omit diagnoses, hypotheses, recommendations, and any details absent from the approved draft.`;
 
-let localAppCheck: AppCheck | undefined;
+let cloudAppCheck: AppCheck | undefined;
 
-function getLocalAppCheck(): AppCheck {
-  if (localAppCheck) {
-    return localAppCheck;
+function getCloudAppCheck(): AppCheck {
+  if (cloudAppCheck) return cloudAppCheck;
+
+  if (process.env.NODE_ENV === "development" && window.location.hostname === "localhost") {
+    const debugGlobal = globalThis as typeof globalThis & {
+      FIREBASE_APPCHECK_DEBUG_TOKEN?: boolean;
+    };
+    debugGlobal.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+
+    cloudAppCheck = initializeAppCheck(firebaseApp, {
+      provider: new CustomProvider({
+        getToken: async () => {
+          throw new Error("This provider requires localhost App Check debug mode.");
+        },
+      }),
+    });
+  } else {
+    const siteKey = process.env.NEXT_PUBLIC_FIREBASE_APPCHECK_SITE_KEY?.trim();
+    if (!siteKey) throw new Error("Missing reCAPTCHA Enterprise site key for Firebase App Check.");
+
+    cloudAppCheck = initializeAppCheck(firebaseApp, {
+      provider: new ReCaptchaEnterpriseProvider(siteKey),
+    });
   }
 
-  if (window.location.hostname !== "localhost") {
-    throw new Error("Run the app on localhost to use Firebase App Check debug mode.");
-  }
-
-  const debugGlobal = globalThis as typeof globalThis & {
-    FIREBASE_APPCHECK_DEBUG_TOKEN?: boolean;
-  };
-
-  debugGlobal.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-
-  localAppCheck = initializeAppCheck(firebaseApp, {
-    provider: new CustomProvider({
-      getToken: async () => {
-        throw new Error("This test page requires App Check debug mode.");
-      },
-    }),
-  });
-
-  return localAppCheck;
+  return cloudAppCheck;
 }
 
 async function getCloudModel(systemInstruction?: string) {
-  await getToken(getLocalAppCheck());
+  await getToken(getCloudAppCheck());
 
   const ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });
   return getGenerativeModel(ai, {
@@ -445,7 +448,9 @@ export default function Home() {
     } catch {
       if (version === draftVersion.current) {
         setPolishError(
-          "Cloud polishing failed. Run Handoff on localhost, check your connection and Firebase App Check debug token, then try again.",
+          process.env.NODE_ENV === "development" && window.location.hostname === "localhost"
+            ? "Cloud polishing failed. Check your connection and the Firebase App Check debug token registered for this browser, then try again."
+            : "Cloud polishing failed. Check your connection and allow reCAPTCHA Enterprise to load, then try again. If the problem persists, check the hosted Firebase App Check configuration.",
         );
       }
     } finally {
